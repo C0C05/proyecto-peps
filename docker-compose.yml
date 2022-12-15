@@ -1,0 +1,49 @@
+version: '3'
+services:
+  mysql:
+    container_name: mysql
+    image: mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: db_exploits
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_USER: prueba
+      MYSQL_USER_PASSWORD: 1234
+    volumes:
+      - ./datos:/var/lib/mysql
+    ports:
+      - 3306:3306
+  phpmyadmin:
+    container_name: phpmyadmin
+    image: phpmyadmin
+    restart: always
+    ports:
+      - 9093:80
+    environment:
+      PMA_HOST: mysql
+    depends_on:
+      - mysql
+  apache:
+    build: ./apache
+    container_name: apache
+    volumes:
+      - ./miweb:/var/www/html
+    ports:
+      - "9094:80"
+    restart: unless-stopped
+    depends_on:
+      - mysql
+  api:
+    build: ./api
+    container_name: api
+    environment:
+      DB_USERNAME: root
+      DB_PASSWORD: 1234
+      DB_DATABASE: db_exploits
+      DB_HOST: mysql
+      DB_PORT: 3306
+      PORT: 8080
+      HOST: "0.0.0.0"
+    depends_on:
+      - apache
+      - mysql
