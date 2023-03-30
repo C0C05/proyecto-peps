@@ -23,16 +23,6 @@ services:
       PMA_HOST: mysql
     depends_on:
       - mysql
-  apache:
-    build: ./apache
-    container_name: apache
-    volumes:
-      - ./miweb:/var/www/html
-    ports:
-      - "9094:80"
-    restart: unless-stopped
-    depends_on:
-      - mysql
   api:
     build: ./api
     container_name: api
@@ -44,6 +34,7 @@ services:
       DB_PORT: 3306
       PORT: 8080
       HOST: "0.0.0.0"
+    ports: 
+      - 9094:8080
     depends_on:
-      - apache
       - mysql
