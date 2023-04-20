@@ -4,11 +4,14 @@ services:
     container_name: mysql
     image: mysql
     restart: always
+    secrets: 
+      - db_password_root
+      - db_password_user
     environment:
       MYSQL_DATABASE: db_exploits
-      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_ROOT_PASSWORD: ${db_password_root}
       MYSQL_USER: prueba
-      MYSQL_USER_PASSWORD: 1234
+      MYSQL_USER_PASSWORD: ${db_password_user}
     volumes:
       - ./datos:/var/lib/mysql
     ports:
@@ -26,9 +29,11 @@ services:
   api:
     build: ./api
     container_name: api
+    secrets:
+      - db_password_root
     environment:
       DB_USERNAME: root
-      DB_PASSWORD: 1234
+      DB_PASSWORD: ${db_password_root}
       DB_DATABASE: db_exploits
       DB_HOST: mysql
       DB_PORT: 3306
@@ -38,3 +43,9 @@ services:
       - 9094:8080
     depends_on:
       - mysql
+secrets:
+  db_password_root:
+    file: ./db_password_root
+  db_password_user:
+    file: ./db_password_user
+  
