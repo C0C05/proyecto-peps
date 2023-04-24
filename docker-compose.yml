@@ -4,9 +4,9 @@ services:
     container_name: mysql
     image: mysql
     restart: always
-    secrets: 
-      - db_password_root
-      - db_password_user
+    #secrets: 
+      #- db_password_root
+      #- db_password_user
     environment:
       MYSQL_DATABASE: db_exploits
       MYSQL_ROOT_PASSWORD: ${db_password_root}
@@ -29,8 +29,8 @@ services:
   api:
     build: ./api
     container_name: api
-    secrets:
-      - db_password_root
+    #secrets:
+      #- db_password_root
     environment:
       DB_USERNAME: root
       DB_PASSWORD: ${db_password_root}
@@ -43,9 +43,11 @@ services:
       - 9094:8080
     depends_on:
       - mysql
-secrets:
-  db_password_root:
-    file: ./db_password_root
-  db_password_user:
-    file: ./db_password_user
+#secrets: //Esta sección está comentada debido a que secrets no está activo de forma nativa en windows, por lo que utilizo variables de entorno
+  #db_password_root:
+    #external: true  //para usar con docker secret create 
+    #file: ./db_password_root.txt // para usar directamente con el archivo
+  #db_password_user:
+    #external: true
+    #file: ./db_password_user.txt
   
