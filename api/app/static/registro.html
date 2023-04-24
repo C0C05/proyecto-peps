@@ -12,8 +12,6 @@
             color: red;
         }
     </style>
-    <SCRIPT type="text/javascript" src="./functions.js">
-    </SCRIPT>
     <script type="text/javascript">
         var myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
@@ -22,7 +20,7 @@
             document.getElementsByClassName("error")[0].style.display = "none";
             var raw = JSON.stringify({
                 "username": document.getElementById("username").value,
-                "hash": SHA256(document.getElementById("password").value),
+                "pass": document.getElementById("password").value
             });
 
             var requestOptions = {

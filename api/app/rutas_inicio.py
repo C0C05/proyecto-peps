@@ -4,6 +4,7 @@ from flask import request,session,redirect,send_file
 from bd import obtener_conexion
 import json
 import sys
+import hashlib
 import logging
 
 
@@ -26,16 +27,16 @@ def registro():
     if (content_type == 'application/json'):
         cred_json = request.json
         username = cred_json['username']
-        hash = cred_json['hash']
+        password = cred_json['pass']
         try:
             conexion = obtener_conexion()
             with conexion.cursor() as cursor:
                  #cursor.execute("SELECT perfil FROM users WHERE user = %s and passHash= %s",(username,hash))
-                 cursor.execute("SELECT user FROM users WHERE user = '" + username +"' and passHash= '" + hash + "'")
+                 cursor.execute("SELECT user FROM users WHERE user = '" + username +"' and passHash= '" + password + "'")
                  user = cursor.fetchone()
                  if user is None:
-                     print("INSERT INTO users(user,passHash) VALUES('"+ username +"','"+  hash+"')") 
-                     cursor.execute("INSERT INTO users(user,passHash) VALUES('"+ username +"','"+  hash+"')")
+                     print("INSERT INTO users(user,passHash) VALUES('"+ username +"','"+  password+"')") 
+                     cursor.execute("INSERT INTO users(user,passHash) VALUES('"+ username +"','"+  password+"')")
                      if cursor.rowcount == 1:
                          conexion.commit()
                          ret={"status": "OK" }
@@ -60,28 +61,37 @@ def registro():
 def login():
     content_type = request.headers.get('Content-Type')
     if (content_type == 'application/json'):
-        cred_json = request.json
-        username = cred_json['username']
-        hash = cred_json['hash']
         try:
-            conexion = obtener_conexion()
-            with conexion.cursor() as cursor:
-                cursor.execute("SELECT passHash FROM users WHERE user = '" + username +"' and passHash= '" + hash + "'")
-                usuario = cursor.fetchone()
-            if usuario is None:
-                ret = {"status": "ERROR","mensaje":"Usuario/clave erroneo" }
-                code = 401
-            else:
+            cred_json = request.json
+            if not isinstance(cred_json, dict):
+                raise ValueError("Entrada JSON invalida")
+            username = cred_json['username']
+            password = cred_json['pass']
+            if not isinstance(username, str) or not isinstance(password, str):
+                raise ValueError("Entrada JSON invalida")
+            #Generar el hash de la contraseña
+            password_hash = hashlib.sha256(password.encode('utf-8')).hexdigest()
+            try:
+                conexion = obtener_conexion()
                 with conexion.cursor() as cursor:
-                    cursor.execute("UPDATE users set accessDate = now() where user = '{}'".format(username))
-                ret = {"status": "OK" }
-                session["user"]=username
-                session["hash"]=usuario[0]
-                code=200
-        except:
-            print("Excepcion al validar al usuario")   
-            ret={"status":"ERROR"}
-            code=500
+                    cursor.execute("SELECT passHash FROM users WHERE user = '" + username +"' and passHash= '" + password_hash + "'")
+                    usuario = cursor.fetchone()
+                if usuario is None:
+                    ret = {"status": "ERROR","mensaje":"Usuario/clave erroneo" }
+                    code = 401
+                else:
+                    with conexion.cursor() as cursor:
+                        cursor.execute("UPDATE users set accessDate = now() where user = '{}'".format(username))
+                    ret = {"status": "OK" }
+                    session["user"]=username
+                    code=200
+            except:
+                print("Excepcion al validar al usuario")   
+                ret={"status":"ERROR"}
+                code=500
+        except ValueError:
+            ret={"status":"Bad request"}
+            code=401
     else:
         ret={"status":"Bad request"}
         code=401
