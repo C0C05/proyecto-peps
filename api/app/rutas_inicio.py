@@ -1,11 +1,10 @@
 from __future__ import print_function
 from __main__ import app
-from flask import request,session,redirect,send_file
+from flask import request,session,redirect
 from bd import obtener_conexion
 import json
-import sys
 import hashlib
-import logging
+
 
 
 @app.before_request
@@ -25,33 +24,42 @@ def whoami():
 def registro():
     content_type = request.headers.get('Content-Type')
     if (content_type == 'application/json'):
-        cred_json = request.json
-        username = cred_json['username']
-        password = cred_json['pass']
         try:
-            conexion = obtener_conexion()
-            with conexion.cursor() as cursor:
-                 #cursor.execute("SELECT perfil FROM users WHERE user = %s and passHash= %s",(username,hash))
-                 cursor.execute("SELECT user FROM users WHERE user = '" + username +"' and passHash= '" + password + "'")
-                 user = cursor.fetchone()
-                 if user is None:
-                     print("INSERT INTO users(user,passHash) VALUES('"+ username +"','"+  password+"')") 
-                     cursor.execute("INSERT INTO users(user,passHash) VALUES('"+ username +"','"+  password+"')")
-                     if cursor.rowcount == 1:
-                         conexion.commit()
-                         ret={"status": "OK" }
-                         code=200
-                     else:
-                         ret={"status": "ERROR" }
-                         code=500
-                 else:
-                   ret = {"status": "ERROR","mensaje":"user/pass erroneo" }
-                   code=200
-            conexion.close()
-        except:
-            print("Excepcion al registrar al user")   
-            ret={"status":"ERROR"}
-            code=500
+            cred_json = request.json
+            if not isinstance(cred_json, dict):
+                raise ValueError("Entrada JSON invalida")
+            username = cred_json['username']
+            password = cred_json['pass']
+            if not isinstance(username, str) or not isinstance(password, str):
+                raise ValueError("Entrada JSON invalida")
+            #Generar el hash de la contraseña
+            password_hash = hashlib.sha256(password.encode('utf-8')).hexdigest()
+            try:
+                conexion = obtener_conexion()
+                with conexion.cursor() as cursor:
+                    #cursor.execute("SELECT perfil FROM users WHERE user = %s and passHash= %s",(username,hash))
+                    cursor.execute("SELECT user FROM users WHERE user = %s and passHash= %s",(username, password_hash))
+                    user = cursor.fetchone()
+                    if user is None:
+                        cursor.execute("INSERT INTO users(user,passHash) VALUES(%s,%s)",(username,password_hash)) 
+                        if cursor.rowcount == 1:
+                            conexion.commit()
+                            ret={"status": "OK" }
+                            code=200
+                        else:
+                            ret={"status": "ERROR" }
+                            code=500
+                    else:
+                        ret = {"status": "ERROR","mensaje":"user/pass erroneo" }
+                        code=500
+                conexion.close()
+            except:
+                print("Excepcion al registrar al user")   
+                ret={"status":"ERROR"}
+                code=500
+        except ValueError:
+            ret={"status":"Bad request"}
+            code=401
     else:
         ret={"status":"Bad request"}
         code=401
