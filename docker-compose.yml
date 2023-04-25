@@ -2,7 +2,7 @@ version: '3'
 services:
   mysql:
     container_name: mysql
-    image: mysql
+    image: mysql:latest
     restart: always
     #secrets: 
       #- db_password_root
@@ -17,16 +17,6 @@ services:
       - ./mysql-init:/docker-entrypoint-initdb.d
     ports:
       - 3306:3306
-  phpmyadmin:
-    container_name: phpmyadmin
-    image: phpmyadmin
-    restart: always
-    ports:
-      - 9093:80
-    environment:
-      PMA_HOST: mysql
-    depends_on:
-      - mysql
   api:
     build: ./api
     container_name: api
@@ -42,6 +32,16 @@ services:
       HOST: "0.0.0.0"
     ports: 
       - 9094:8080
+    depends_on:
+      - mysql
+  phpmyadmin:
+    container_name: phpmyadmin
+    image: phpmyadmin
+    restart: always
+    ports:
+      - 9093:80
+    environment:
+      PMA_HOST: mysql
     depends_on:
       - mysql
 #secrets: //Esta sección está comentada debido a que secrets no está activo de forma nativa en windows, por lo que utilizo variables de entorno

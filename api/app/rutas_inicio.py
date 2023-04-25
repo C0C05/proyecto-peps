@@ -74,14 +74,16 @@ def login():
             try:
                 conexion = obtener_conexion()
                 with conexion.cursor() as cursor:
-                    cursor.execute("SELECT passHash FROM users WHERE user = '" + username +"' and passHash= '" + password_hash + "'")
+                    #cursor.execute("SELECT passHash FROM users WHERE user = '" + username +"' and passHash= '" + password_hash + "'")
+                    cursor.execute("SELECT passHash FROM users WHERE user = %s and passHash = %s", (username, password_hash)) #Seguro
                     usuario = cursor.fetchone()
                 if usuario is None:
                     ret = {"status": "ERROR","mensaje":"Usuario/clave erroneo" }
                     code = 401
                 else:
                     with conexion.cursor() as cursor:
-                        cursor.execute("UPDATE users set accessDate = now() where user = '{}'".format(username))
+                        #cursor.execute("UPDATE users set accessDate = now() where user = '{}'".format(username))
+                        cursor.execute("UPDATE users set accessDate = now() where user = %s", (username)) #Seguro
                     ret = {"status": "OK" }
                     session["user"]=username
                     code=200
