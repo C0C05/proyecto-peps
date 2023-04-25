@@ -1,5 +1,10 @@
 version: '3'
 services:
+  waf:
+    container_name: waf
+    build: ./waf
+    ports:
+      - 8080:80
   mysql:
     container_name: mysql
     image: mysql:latest
